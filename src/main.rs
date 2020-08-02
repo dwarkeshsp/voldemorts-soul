@@ -34,7 +34,8 @@ fn encrypt(data: String) {
     // for (i, block) in blocks.iter().enumerate() {
     //     println!("Block {}:\n{}", i, block);
     // }
-    merkle_tree::make_tree(blocks);
+    let node = merkle_tree::Node::make_tree(blocks);
+    println!("{:?}", node)
 }
 
 fn decrypt(dir: fs::ReadDir) {}

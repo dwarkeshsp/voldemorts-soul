@@ -3,3 +3,11 @@ ways to use horcrux
 filename -> creates dir of encrypted data blocks
 
 dirname -> creates file from decrypted datablocks
+
+---
+
+def array -> merkle tree :
+    while nodes > 1
+        create node of every other
+        if odd, last element is own node
+    return nodes[0]
