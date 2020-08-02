@@ -1,0 +1,5 @@
+ways to use horcrux
+
+filename -> creates dir of encrypted data blocks
+
+dirname -> creates file from decrypted datablocks
