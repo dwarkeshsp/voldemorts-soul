@@ -1,6 +1,8 @@
 use std::env;
 use std::fs;
 
+mod merkle_tree;
+
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
 
@@ -17,7 +19,22 @@ fn main() -> std::io::Result<()> {
 }
 
 fn encrypt(data: String) {
-    println!("Encrypting your file:\n{}", data);
+    const BLOCK_LENGTH: usize = 512;
+
+    //println!("Encrypting your file:\n{}\n", data);
+
+    let mut blocks: Vec<&str> = Vec::new();
+    let mut i = 0;
+    while i + BLOCK_LENGTH < data.len() {
+        blocks.push(&data[i..i + BLOCK_LENGTH]);
+        i += BLOCK_LENGTH;
+    }
+    blocks.push(&data[i..data.len()]);
+
+    // for (i, block) in blocks.iter().enumerate() {
+    //     println!("Block {}:\n{}", i, block);
+    // }
+    merkle_tree::make_tree(blocks);
 }
 
 fn decrypt(dir: fs::ReadDir) {}
