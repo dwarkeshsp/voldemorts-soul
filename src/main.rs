@@ -3,6 +3,8 @@ use std::fs;
 
 mod merkle_tree;
 
+pub const BLOCK_LENGTH: usize = 1024;
+
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
 
@@ -19,8 +21,6 @@ fn main() -> std::io::Result<()> {
 }
 
 fn encrypt(data: String) {
-    const BLOCK_LENGTH: usize = 1024;
-
     //println!("Encrypting your file:\n{}\n", data);
 
     let mut blocks: Vec<&str> = Vec::new();

@@ -32,14 +32,10 @@ impl Tree {
                 if index % 2 == 0 {
                     if index + 1 < len {
                         //matched; has sibling
-                        tree.nodes.push(Node::make_from_children(
-                            &tree.nodes,
-                            NodeId { index },
-                            NodeId { index: index + 1 },
-                        ));
-                    } else {
                         tree.nodes
-                            .push(Node::make_from_child(&tree.nodes, NodeId { index }));
+                            .push(Node::make_from_children(&tree.nodes, index, index + 1));
+                    } else {
+                        tree.nodes.push(Node::make_from_child(&tree.nodes, index));
                     }
                 }
             }
@@ -65,24 +61,24 @@ impl Node {
         }
     }
 
-    fn make_from_children(nodes: &Vec<Node>, left: NodeId, right: NodeId) -> Self {
+    fn make_from_children(nodes: &Vec<Node>, left: usize, right: usize) -> Self {
         let mut hasher = blake3::Hasher::new();
-        hasher.update(&nodes[left.index].hash);
-        hasher.update(&nodes[left.index].hash);
+        hasher.update(&nodes[left].hash);
+        hasher.update(&nodes[left].hash);
         let mut output = [0; 32];
         let mut output_reader = hasher.finalize_xof();
         output_reader.fill(&mut output);
         Node {
-            left: Some(left),
-            right: Some(right),
+            left: Some(NodeId { index: left }),
+            right: Some(NodeId { index: right }),
             hash: output,
         }
     }
 
-    fn make_from_child(nodes: &Vec<Node>, left: NodeId) -> Self {
-        let hash = nodes[left.index].hash;
+    fn make_from_child(nodes: &Vec<Node>, left: usize) -> Self {
+        let hash = nodes[left].hash;
         Node {
-            left: Some(left),
+            left: Some(NodeId { index: left }),
             right: None,
             hash: hash,
         }
