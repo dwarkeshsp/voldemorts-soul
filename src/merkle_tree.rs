@@ -1,19 +1,18 @@
-use blake3;
+use crate::BLOCK_LENGTH;
 
-// type TreeNode = Option<Box<Node>>;
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Tree {
     pub nodes: Vec<Node>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Node {
     left: Option<NodeId>,
     right: Option<NodeId>,
-    hash: [u8; 32],
+    xor: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct NodeId {
     index: usize,
 }
@@ -49,38 +48,36 @@ impl Tree {
 
 impl Node {
     fn make_block(block: &str) -> Self {
-        let mut hasher = blake3::Hasher::new();
-        hasher.update(block.as_bytes());
-        let mut output = [0; 32];
-        let mut output_reader = hasher.finalize_xof();
-        output_reader.fill(&mut output);
         Node {
             left: None,
             right: None,
-            hash: output,
+            xor: String::from(block),
         }
     }
 
     fn make_from_children(nodes: &Vec<Node>, left: usize, right: usize) -> Self {
-        let mut hasher = blake3::Hasher::new();
-        hasher.update(&nodes[left].hash);
-        hasher.update(&nodes[left].hash);
-        let mut output = [0; 32];
-        let mut output_reader = hasher.finalize_xof();
-        output_reader.fill(&mut output);
+        let xor = xor(&nodes[left].xor.as_bytes(), &nodes[right].xor.as_bytes());
         Node {
             left: Some(NodeId { index: left }),
             right: Some(NodeId { index: right }),
-            hash: output,
+            xor: xor,
         }
     }
 
     fn make_from_child(nodes: &Vec<Node>, left: usize) -> Self {
-        let hash = nodes[left].hash;
+        let node = &nodes[left];
         Node {
             left: Some(NodeId { index: left }),
             right: None,
-            hash: hash,
+            xor: node.xor.clone(),
         }
     }
+}
+
+pub fn xor(left: &[u8], right: &[u8]) -> String {
+    let mut result: Vec<u8> = Vec::with_capacity(BLOCK_LENGTH);
+    for i in 0..right.len() {
+        result.push(left[i] ^ right[i]);
+    }
+    String::from_utf8(result).unwrap()
 }
