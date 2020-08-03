@@ -19,7 +19,7 @@ fn main() -> std::io::Result<()> {
 }
 
 fn encrypt(data: String) {
-    const BLOCK_LENGTH: usize = 512;
+    const BLOCK_LENGTH: usize = 1024;
 
     //println!("Encrypting your file:\n{}\n", data);
 
@@ -34,8 +34,9 @@ fn encrypt(data: String) {
     // for (i, block) in blocks.iter().enumerate() {
     //     println!("Block {}:\n{}", i, block);
     // }
-    let node = merkle_tree::Node::make_tree(blocks);
-    println!("{:?}", node)
+    let tree = merkle_tree::Tree::new(blocks);
+    println!("Len:\n{}", tree.nodes.len());
+    println!("Root:\n{:?}", tree.nodes[tree.nodes.len() - 1])
 }
 
 fn decrypt(dir: fs::ReadDir) {}

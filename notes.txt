@@ -11,3 +11,7 @@ def array -> merkle tree :
         create node of every other
         if odd, last element is own node
     return nodes[0]
+
+---
+
+use as 'cargo run tests/poem.txt'
