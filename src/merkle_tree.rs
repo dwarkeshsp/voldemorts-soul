@@ -1,24 +1,17 @@
-use crate::BLOCK_LENGTH;
+use crate::xor;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Tree {
     pub nodes: Vec<Node>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Node {
-    left: Option<NodeId>,
-    right: Option<NodeId>,
-    xor: String,
+    pub xor: Vec<u8>,
 }
 
-#[derive(Debug)]
-pub struct NodeId {
-    index: usize,
-}
-
-impl Tree {
-    pub fn new(blocks: Vec<&str>) -> Self {
+impl Node {
+    pub fn root(blocks: &Vec<&[u8]>) -> Self {
         let mut tree = Tree { nodes: Vec::new() };
         for block in blocks {
             tree.nodes.push(Node::make_block(block));
@@ -42,42 +35,23 @@ impl Tree {
             len = tree.nodes.len();
         }
 
-        tree
+        tree.nodes[tree.nodes.len() - 1].clone()
     }
-}
 
-impl Node {
-    fn make_block(block: &str) -> Self {
+    fn make_block(block: &[u8]) -> Self {
         Node {
-            left: None,
-            right: None,
-            xor: String::from(block),
+            xor: Vec::from(block),
         }
     }
 
     fn make_from_children(nodes: &Vec<Node>, left: usize, right: usize) -> Self {
-        let xor = xor(&nodes[left].xor.as_bytes(), &nodes[right].xor.as_bytes());
-        Node {
-            left: Some(NodeId { index: left }),
-            right: Some(NodeId { index: right }),
-            xor: xor,
-        }
+        let xor = xor(&nodes[left].xor, &nodes[right].xor);
+        Node { xor: xor }
     }
 
     fn make_from_child(nodes: &Vec<Node>, left: usize) -> Self {
-        let node = &nodes[left];
         Node {
-            left: Some(NodeId { index: left }),
-            right: None,
-            xor: node.xor.clone(),
+            xor: nodes[left].xor.clone(),
         }
     }
-}
-
-pub fn xor(left: &[u8], right: &[u8]) -> String {
-    let mut result: Vec<u8> = Vec::with_capacity(BLOCK_LENGTH);
-    for i in 0..right.len() {
-        result.push(left[i] ^ right[i]);
-    }
-    String::from_utf8(result).unwrap()
 }
