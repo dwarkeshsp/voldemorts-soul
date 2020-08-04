@@ -1,3 +1,4 @@
+use rand::{thread_rng, Rng};
 use std::env;
 use std::fs;
 use std::io;
@@ -27,26 +28,17 @@ fn main() -> io::Result<()> {
 }
 
 fn encrypt(path: &String) -> io::Result<()> {
-    println!("Encrypting your file...\n");
+    println!("Encrypting {}...\n", path);
 
     let data = fs::read(path)?;
+    let mut remainder: [u8; BLOCK_LENGTH] = [0; BLOCK_LENGTH];
 
-    let mut blocks: Vec<&[u8]> = Vec::new();
-    let mut i = 0;
-    while i + BLOCK_LENGTH < data.len() {
-        blocks.push(&data[i..i + BLOCK_LENGTH]);
-        i += BLOCK_LENGTH;
-    }
-    blocks.push(&data[i..data.len()]);
+    let blocks = split(&data, &mut remainder);
 
-    // for (i, block) in blocks.iter().enumerate() {
-    //     println!("Block {}:\n{}", i, block);
-    // }
     let root = merkle_tree::Node::root(&blocks);
     println!("# Blocks: {}", blocks.len());
-
     println!("Root:\n{:?}", root);
-    println!("xor length:\n{:?}", root.xor.len());
+    println!("xor length: {:?}", root.xor.len());
 
     let key = root.xor;
 
@@ -54,6 +46,21 @@ fn encrypt(path: &String) -> io::Result<()> {
         // let encrypted_block = xor(&String::from(*block), &key);
     }
     Ok(())
+}
+
+fn split<'a>(data: &'a Vec<u8>, remainder: &'a mut [u8; BLOCK_LENGTH]) -> Vec<&'a [u8]> {
+    let mut blocks: Vec<&[u8]> = Vec::new();
+    let mut i = 0;
+    while i + BLOCK_LENGTH < data.len() {
+        blocks.push(&data[i..i + BLOCK_LENGTH]);
+        i += BLOCK_LENGTH;
+    }
+    for i in 0..i % BLOCK_LENGTH {
+        remainder[i] = data[i];
+    }
+    // thread_rng().fill(&mut *remainder);
+    blocks.push(remainder);
+    blocks
 }
 
 fn decrypt(path: &String) -> io::Result<()> {
@@ -70,7 +77,7 @@ pub fn xor(left_string: &Vec<u8>, right_string: &Vec<u8>) -> Vec<u8> {
     } else {
         right.len()
     };
-    let mut result: Vec<u8> = Vec::with_capacity(len);
+    let mut result: Vec<u8> = Vec::new();
 
     for i in 0..len {
         result.push(left[i] ^ right[i]);
@@ -81,5 +88,5 @@ pub fn xor(left_string: &Vec<u8>, right_string: &Vec<u8>) -> Vec<u8> {
     for i in len..right.len() {
         result.push(right[i]);
     }
-    Vec::from(result)
+    result
 }
