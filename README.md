@@ -16,27 +16,11 @@ The xor operation is reversible, meaning (A ⊕ B) ⊕ B = A. I found that a bin
 
 For example, let's say we split a message into four strings, A, B, C, D. If we make an xor tree of out of these strings.
 
-​                   root
-
-        /                        \
-
-​     A ⊕ B						  C ⊕ D
-
-  /         \                 /         \  
-
-A             B				C             D
+![img](https://raw.githubusercontent.com/dwarkeshsp/voldemorts-soul/6f43657923ab790153913f8b422343c853c51a52/images/1.svg)
 
 and encrypt our strings by xoring them with the root such that A' = A ⊕ root, we will get a tree with the same root:
 
-​							root
-
-​				/							\
-
-​		A' ⊕ B'						C' ⊕ D'
-
-​	/			\						/			\
-
-A'				B'				C'				D'
+![img](https://raw.githubusercontent.com/dwarkeshsp/voldemorts-soul/6f43657923ab790153913f8b422343c853c51a52/images/2.svg)
 
 So if we have all the encrypted strings A', B', ..., we make the original xor tree root. By xoring our encrypted strings with the root, we can decrypt our strings, since A' ⊕ root = A. **To put is simply, since the root of the xor tree is the same with decrypted and encrypted strings, we can use that root to both encrypt and decrypt the strings. And since we need every string in order to create the correct root,  we ensure that all the parts of message are present before they are decrypted**
 
@@ -44,64 +28,20 @@ So if we have all the encrypted strings A', B', ..., we make the original xor tr
 
 Let's consider the simple case of an xor tree with two leaf string
 
-​	A ⊕ B
-
-​	/		\
-
-A			B
+![img](https://raw.githubusercontent.com/dwarkeshsp/voldemorts-soul/6f43657923ab790153913f8b422343c853c51a52/images/3.svg)
 
 If we wanted to encrypt our strings by xoring them with the root as explained above, we would get 
 
-A' = A ⊕ (A ⊕ B) = (A ⊕ A) ⊕ B = 0 ⊕ B = B
+**A' = A ⊕ (A ⊕ B) = (A ⊕ A) ⊕ B = 0 ⊕ B = B**
 
-B' = B ⊕ (A ⊕ B) = (B ⊕ B) ⊕ A = 0 ⊕ A = A
+**B' = B ⊕ (A ⊕ B) = (B ⊕ B) ⊕ A = 0 ⊕ A = A**
 
 If we make an xor tree out of our encrypted strings, we get:
 
-​	A' ⊕ B' = A ⊕ B
-
-​	/					\
-
-A' = B			B' = A
+![img](https://raw.githubusercontent.com/dwarkeshsp/voldemorts-soul/6f43657923ab790153913f8b422343c853c51a52/images/4.svg)
 
 Therefore, the root of the original tree (A ⊕ B) equals the root or the encrypted tree (A' ⊕ B'). 
 
-This proof can be generalized to any sized binary xor tree by treated branches as a single leaf node, for example: 
+This proof can be generalized to any sized binary xor tree by collapsing branches until you arrive at the simple case discussed above.
 
-let A = 					
-
-​	a ⊕ b		
-
-​	/		\				
-
-a			b	
-
-and let B = 
-
-​	c ⊕ d		
-
-​	/		\				
-
-c			d	
-
-This allows us to treat:
-
-​				(a ⊕ b) ⊕ (c ⊕ d) 
-
-​				/						\
-
-​		a ⊕ b						c ⊕ d
-
-​	/			\					/			\
-
-a				b				c				d
-
-as: 
-
-​	A ⊕ B
-
-​	/		\
-
-A			B
-
-which we already proved was reversible.
+![img](https://raw.githubusercontent.com/dwarkeshsp/voldemorts-soul/6f43657923ab790153913f8b422343c853c51a52/images/5.svg)

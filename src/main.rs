@@ -1,21 +1,16 @@
-use rand::{thread_rng, Rng};
 use std::env;
 use std::fs;
 use std::io;
 
-mod merkle_tree;
+mod xor_tree;
 
 pub const BLOCK_LENGTH: usize = 1024;
 
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
-
     let path = &args[1].clone();
-    let metadata = match fs::metadata(path) {
-        Ok(metadata) => metadata,
-        Err(e) => panic!("File not valid\n{}", e),
-    };
 
+    let metadata = get_metadata(path);
     if metadata.is_file() {
         encrypt(path)?;
     } else if metadata.is_dir() {
@@ -27,6 +22,14 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
+fn get_metadata(path: &String) -> fs::Metadata {
+    let metadata = match fs::metadata(path) {
+        Ok(metadata) => metadata,
+        Err(e) => panic!("File not valid\n{}", e),
+    };
+    metadata
+}
+
 fn encrypt(path: &String) -> io::Result<()> {
     println!("Encrypting {}...\n", path);
 
@@ -35,15 +38,15 @@ fn encrypt(path: &String) -> io::Result<()> {
 
     let blocks = split(&data, &mut remainder);
 
-    let root = merkle_tree::Node::root(&blocks);
+    let root = xor_tree::Node::make_root(&blocks);
     println!("# Blocks: {}", blocks.len());
     println!("Root:\n{:?}", root);
     println!("xor length: {:?}", root.xor.len());
 
     let key = root.xor;
-
-    for (i, block) in blocks.iter().enumerate() {
-        // let encrypted_block = xor(&String::from(*block), &key);
+    for block in blocks {
+        let encrypted_block = xor(&block.to_vec(), &key);
+        fs::write(path.clone() + &".horcrux", encrypted_block)?;
     }
     Ok(())
 }
@@ -55,10 +58,11 @@ fn split<'a>(data: &'a Vec<u8>, remainder: &'a mut [u8; BLOCK_LENGTH]) -> Vec<&'
         blocks.push(&data[i..i + BLOCK_LENGTH]);
         i += BLOCK_LENGTH;
     }
-    for i in 0..i % BLOCK_LENGTH {
+    while i < data.len() {
         remainder[i] = data[i];
+        i += 1;
     }
-    // thread_rng().fill(&mut *remainder);
+    println!("{:?}", String::from_utf8(remainder.to_vec()));
     blocks.push(remainder);
     blocks
 }
@@ -82,6 +86,7 @@ pub fn xor(left_string: &Vec<u8>, right_string: &Vec<u8>) -> Vec<u8> {
     for i in 0..len {
         result.push(left[i] ^ right[i]);
     }
+    // if one side is larger, just append the rest of that side
     for i in len..left.len() {
         result.push(left[i]);
     }
