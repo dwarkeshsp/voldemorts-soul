@@ -1,20 +1,20 @@
 (not yet finished)
 
-Splits a message into parts and encrypts the parts such they can only be decrypted and reassembled if you have all the parts.
+Splits a message up and encrypts the parts such they can only be decrypted and reassembled if you have all the encrypted parts.
 
-Kinda like Voldemort's soul, where Harry had to get all the horcruxes (parts of the Voldemort's soul) in order to kill the dark lord. Except we're not destroying the message so much as decrypting it :).
+Maybe you're part of a secret society. You don't trust any member individually to keep a secret message safe, so you use this program to encrypt and split up the message and then give every member one of these encrypted chunks. You can only decrypt the message if every single member gives you a copy of their chunk.
+
+I named it Voldemort's soul because it's like when Harry had to get every single horcruxes in order to kill the dark lord. Except we're not destroying the message so much as decrypting it :).
 
 ### How it works
 
-Our goal is to split up a file into parts and then encrypt these chunks in such a way that they can only be unencrypted by having every chunk. 
+Our goal is to split up a file into parts and then encrypt these chunks in such a way that they can only be unencrypted by having every chunk. Here's how we'll do it:
 
 ### Explanation
 
-The xor operation is reversible, meaning (A ⊕ B) ⊕ B = A.
+The xor operation is reversible, meaning (A ⊕ B) ⊕ B = A. I found that a binary xor tree is also reversible. If you xor the root of a binary xor tree with all the leaves, and then construct a new xor tree with these xored leaves, you get the same root! 
 
-I found that a binary xor tree is also reversible. If you xor the root of an xor tree with all the leaves, and then construct a new xor tree with these xored leaves, you get the same root! 
-
-Let's say we split a message into four strings, A, B, C, D. If we make an xor tree of out of these strings.
+For example, let's say we split a message into four strings, A, B, C, D. If we make an xor tree of out of these strings.
 
 ​						root
 
@@ -38,7 +38,7 @@ and encrypt our strings by xoring them with the root such that A' = A ⊕ root, 
 
 A'				B'				C'				D'
 
-So if we have all the encrypted strings A', B', ..., we make the original xor tree root. By xoring our encrypted strings with the root, we can decrypt our strings, since A' ⊕ root = A. **To put is simply, since the root of the xor tree is the same for the decrypted and encrypted leaves, we use the root to both encrypt and decrypt the leaves.**
+So if we have all the encrypted strings A', B', ..., we make the original xor tree root. By xoring our encrypted strings with the root, we can decrypt our strings, since A' ⊕ root = A. **To put is simply, since the root of the xor tree is the same with decrypted and encrypted strings, we can use that root to both encrypt and decrypt the strings. And since we need every string in order to create the correct root,  we ensure that all the parts of message are present before they are decrypted**
 
 ### Proof of reversibility of binary xor tree
 
