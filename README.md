@@ -16,15 +16,15 @@ The xor operation is reversible, meaning (A ⊕ B) ⊕ B = A. I found that a bin
 
 For example, let's say we split a message into four strings, A, B, C, D. If we make an xor tree of out of these strings.
 
-​						root
+​                   root
 
-​				/						\
+        /                        \
 
-​		A ⊕ B						C ⊕ D
+​     A ⊕ B						  C ⊕ D
 
-​	/			\					/			\
+  /         \                 /         \  
 
-A				B				C				D
+A             B				C             D
 
 and encrypt our strings by xoring them with the root such that A' = A ⊕ root, we will get a tree with the same root:
 
