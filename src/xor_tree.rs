@@ -11,7 +11,7 @@ pub struct Node {
 }
 
 impl Node {
-    pub fn make_root(blocks: &Vec<&[u8]>) -> Self {
+    pub fn make_root(blocks: &Vec<Vec<u8>>) -> Self {
         let mut tree = Tree { nodes: Vec::new() };
         for block in blocks {
             tree.nodes.push(Node::make_block(block));

@@ -1,3 +1,4 @@
+use regex::Regex;
 use std::env;
 use std::fs;
 use std::io;
@@ -44,32 +45,52 @@ fn encrypt(path: &String) -> io::Result<()> {
     println!("xor length: {:?}", root.xor.len());
 
     let key = root.xor;
-    for block in blocks {
+    for (i, block) in blocks.iter().enumerate() {
         let encrypted_block = xor(&block.to_vec(), &key);
-        fs::write(path.clone() + &".horcrux", encrypted_block)?;
+
+        let block_name = path.clone() + &"-" + &i.to_string() + &".horcrux";
+        fs::write(block_name, encrypted_block)?;
     }
     Ok(())
 }
 
-fn split<'a>(data: &'a Vec<u8>, remainder: &'a mut [u8; BLOCK_LENGTH]) -> Vec<&'a [u8]> {
-    let mut blocks: Vec<&[u8]> = Vec::new();
+fn split<'a>(data: &'a Vec<u8>, remainder: &'a mut [u8; BLOCK_LENGTH]) -> Vec<Vec<u8>> {
+    let mut blocks: Vec<Vec<u8>> = Vec::new();
     let mut i = 0;
     while i + BLOCK_LENGTH < data.len() {
-        blocks.push(&data[i..i + BLOCK_LENGTH]);
+        blocks.push(data[i..i + BLOCK_LENGTH].to_vec());
         i += BLOCK_LENGTH;
     }
     while i < data.len() {
-        remainder[i] = data[i];
+        remainder[i % BLOCK_LENGTH] = data[i];
         i += 1;
     }
     println!("{:?}", String::from_utf8(remainder.to_vec()));
-    blocks.push(remainder);
+    blocks.push(remainder.to_vec());
     blocks
 }
 
 fn decrypt(path: &String) -> io::Result<()> {
-    let dir = fs::read_dir(path)?;
-    for dir_entry in dir {}
+    println!("Decrypting {}...\n", path);
+
+    let horcrux_regex = Regex::new(r"(.*?)\.(horcrux)$").unwrap();
+
+    let mut blocks: Vec<Vec<u8>> = Vec::new();
+
+    for entry in fs::read_dir(path)? {
+        let file = entry?;
+        let file_name = file.file_name();
+        if horcrux_regex.is_match(file_name.to_str().unwrap()) {
+            println!("{:?}", file_name);
+            let data = fs::read(file.path()).unwrap();
+            blocks.push(data);
+        }
+    }
+
+    let root = xor_tree::Node::make_root(&blocks);
+    println!("Root:\n{:?}", root);
+    println!("# Blocks: {}", blocks.len());
+
     Ok(())
 }
 
