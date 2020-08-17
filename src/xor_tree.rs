@@ -12,16 +12,13 @@ pub struct Node {
 pub fn get_root_xor(blocks: &Vec<Vec<u8>>) -> Vec<u8> {
     let mut tree = Tree { nodes: Vec::new() };
     let nodes = &mut tree.nodes;
-
     for block in blocks {
         nodes.push(Node {
             xor: block.to_vec(),
         });
     }
-
     let mut cursor = 0;
     let mut len = nodes.len();
-
     while cursor < len - 1 {
         for index in cursor..len {
             if index % 2 == 0 {
@@ -40,6 +37,5 @@ pub fn get_root_xor(blocks: &Vec<Vec<u8>>) -> Vec<u8> {
         cursor = len;
         len = nodes.len();
     }
-
     nodes[nodes.len() - 1].xor.clone()
 }
