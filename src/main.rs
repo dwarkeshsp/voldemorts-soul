@@ -34,13 +34,7 @@ fn encrypt(path: &String) -> io::Result<()> {
     let key = root.xor;
     for (i, block) in blocks.iter().enumerate() {
         let encrypted_block = xor(&block.to_vec(), &key);
-        let block_name = path.to_string() + &i.to_string() + &".horcrux";
-        println!(
-            "Writing name {} len {} data block {:?} ",
-            block_name,
-            encrypted_block.len(),
-            encrypted_block,
-        );
+        let block_name = path.to_string() + &"-encrypted" + &i.to_string() + &".horcrux";
         fs::write(block_name, encrypted_block)?;
     }
     Ok(())
@@ -60,8 +54,8 @@ fn split<'a>(data: &'a Vec<u8>) -> Vec<Vec<u8>> {
         i += 1;
     }
     while remainder.len() % block_size != 0 {
-        println!("here");
-        remainder.push(0);
+        // fill with whitespace
+        remainder.push(32);
     }
     blocks.push(remainder.to_vec());
     blocks
@@ -78,35 +72,31 @@ fn get_block_size(len: usize) -> usize {
 fn decrypt(path: &String) -> io::Result<()> {
     println!("Decrypting {}...\n", path);
     let horcrux_regex = Regex::new(r"(.*?)\.(horcrux)$").unwrap();
-    let mut file_names: Vec<String> = Vec::new();
+    let mut file_paths: Vec<String> = Vec::new();
     for entry in fs::read_dir(path)? {
         let file = entry?;
         let file_path = file.path();
         let path_string = file_path.to_str().unwrap();
         if horcrux_regex.is_match(&path_string) {
-            file_names.push(path_string.to_string());
+            file_paths.push(path_string.to_string());
         }
     }
-    file_names.sort();
-    println!("{:?}", file_names);
+    file_paths.sort();
     let mut blocks: Vec<Vec<u8>> = Vec::new();
-    for file in file_names {
+    for file in file_paths.clone() {
         let data = fs::read(file).unwrap();
-        println!("Writing name len {} data block {:?} ", data.len(), data,);
-
         blocks.push(data);
     }
     let root = xor_tree::Node::make_root(&blocks);
     for i in 0..blocks.len() {
         blocks[i] = xor(&blocks[i], &root.xor);
     }
-    fs::write("message.txt", blocks.concat())?;
-    Ok(())
-}
 
-fn get_file_name(file: &fs::DirEntry) -> String {
-    let file_name = file.file_name();
-    file_name.to_str().unwrap().to_string()
+    fs::write(
+        file_paths[0].split('-').collect::<Vec<&str>>()[0].to_owned() + "-decrypted.horcrux",
+        blocks.concat(),
+    )?;
+    Ok(())
 }
 
 pub fn xor(left_string: &Vec<u8>, right_string: &Vec<u8>) -> Vec<u8> {
