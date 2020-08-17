@@ -31,14 +31,16 @@ fn encrypt(path: &String) -> io::Result<()> {
     let data = fs::read(path)?;
     let blocks = split(&data);
     let root = xor_tree::Node::make_root(&blocks);
-    println!("# Blocks: {}", blocks.len());
-    println!("Root:\n{:?}", root);
-    println!("xor length: {:?}", root.xor.len());
     let key = root.xor;
     for (i, block) in blocks.iter().enumerate() {
         let encrypted_block = xor(&block.to_vec(), &key);
-        println!("writing {:?}", encrypted_block);
-        let block_name = path.clone() + &"-" + &i.to_string() + &".horcrux";
+        let block_name = path.to_string() + &i.to_string() + &".horcrux";
+        println!(
+            "Writing name {} len {} data block {:?} ",
+            block_name,
+            encrypted_block.len(),
+            encrypted_block,
+        );
         fs::write(block_name, encrypted_block)?;
     }
     Ok(())
@@ -57,7 +59,10 @@ fn split<'a>(data: &'a Vec<u8>) -> Vec<Vec<u8>> {
         remainder.push(data[i]);
         i += 1;
     }
-    println!("Remainder {:?}", String::from_utf8(remainder.to_vec()));
+    while remainder.len() % block_size != 0 {
+        println!("here");
+        remainder.push(0);
+    }
     blocks.push(remainder.to_vec());
     blocks
 }
@@ -68,47 +73,49 @@ fn get_block_size(len: usize) -> usize {
     if len % total_horcruxes != 0 {
         block_size += 1;
     }
-    println!("Data len {} Block size {}", len, block_size);
     block_size
 }
 fn decrypt(path: &String) -> io::Result<()> {
     println!("Decrypting {}...\n", path);
     let horcrux_regex = Regex::new(r"(.*?)\.(horcrux)$").unwrap();
-    let mut blocks: Vec<Vec<u8>> = Vec::new();
+    let mut file_names: Vec<String> = Vec::new();
     for entry in fs::read_dir(path)? {
         let file = entry?;
-        let file_name = file.file_name();
-        if horcrux_regex.is_match(file_name.to_str().unwrap()) {
-            println!("Reading {:?}", file_name);
-            let data = fs::read(file.path()).unwrap();
-            println!("{:?}", data);
-            blocks.push(data);
+        let file_path = file.path();
+        let path_string = file_path.to_str().unwrap();
+        if horcrux_regex.is_match(&path_string) {
+            file_names.push(path_string.to_string());
         }
     }
+    file_names.sort();
+    println!("{:?}", file_names);
+    let mut blocks: Vec<Vec<u8>> = Vec::new();
+    for file in file_names {
+        let data = fs::read(file).unwrap();
+        println!("Writing name len {} data block {:?} ", data.len(), data,);
+
+        blocks.push(data);
+    }
     let root = xor_tree::Node::make_root(&blocks);
-    println!("Root:\n{:?}", root);
-    println!("# Blocks: {}", blocks.len());
+    for i in 0..blocks.len() {
+        blocks[i] = xor(&blocks[i], &root.xor);
+    }
+    fs::write("message.txt", blocks.concat())?;
     Ok(())
+}
+
+fn get_file_name(file: &fs::DirEntry) -> String {
+    let file_name = file.file_name();
+    file_name.to_str().unwrap().to_string()
 }
 
 pub fn xor(left_string: &Vec<u8>, right_string: &Vec<u8>) -> Vec<u8> {
     let left = left_string;
     let right = right_string;
-    let len = if left.len() < right.len() {
-        left.len()
-    } else {
-        right.len()
-    };
     let mut xor: Vec<u8> = Vec::new();
-    for i in 0..len {
+    // remainder (possibly shorter than block_size) will always be on the right side
+    for i in 0..right.len() {
         xor.push(left[i] ^ right[i]);
-    }
-    // if one side is larger, just append the rest of that side
-    for i in len..left.len() {
-        xor.push(left[i]);
-    }
-    for i in len..right.len() {
-        xor.push(right[i]);
     }
     xor
 }
