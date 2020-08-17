@@ -8,6 +8,7 @@ fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
     let path = &args[1].clone();
     let metadata = get_metadata(path);
+
     if metadata.is_file() {
         encrypt(path)?;
     } else if metadata.is_dir() {
@@ -15,6 +16,7 @@ fn main() -> io::Result<()> {
     } else {
         panic!("Not a file or directory")
     }
+
     Ok(())
 }
 
@@ -28,15 +30,17 @@ fn get_metadata(path: &String) -> fs::Metadata {
 
 fn encrypt(path: &String) -> io::Result<()> {
     println!("Encrypting {}...\n", path);
+
     let data = fs::read(path)?;
     let blocks = split(&data);
-    let root = xor_tree::Node::make_root(&blocks);
-    let key = root.xor;
+    let key = xor_tree::get_root_xor(&blocks);
+
     for (i, block) in blocks.iter().enumerate() {
         let encrypted_block = xor(&block.to_vec(), &key);
         let block_name = path.to_string() + &"-encrypted" + &i.to_string() + &".horcrux";
         fs::write(block_name, encrypted_block)?;
     }
+
     Ok(())
 }
 
@@ -48,6 +52,7 @@ fn split<'a>(data: &'a Vec<u8>) -> Vec<Vec<u8>> {
         blocks.push(data[i..i + block_size].to_vec());
         i += block_size;
     }
+
     let mut remainder: Vec<u8> = Vec::with_capacity(block_size);
     while i < data.len() {
         remainder.push(data[i]);
@@ -58,6 +63,7 @@ fn split<'a>(data: &'a Vec<u8>) -> Vec<Vec<u8>> {
         remainder.push(32);
     }
     blocks.push(remainder.to_vec());
+
     blocks
 }
 
@@ -71,6 +77,7 @@ fn get_block_size(len: usize) -> usize {
 }
 fn decrypt(path: &String) -> io::Result<()> {
     println!("Decrypting {}...\n", path);
+
     let horcrux_regex = Regex::new(r"(.*?)\.(horcrux)$").unwrap();
     let mut file_paths: Vec<String> = Vec::new();
     for entry in fs::read_dir(path)? {
@@ -82,20 +89,22 @@ fn decrypt(path: &String) -> io::Result<()> {
         }
     }
     file_paths.sort();
+
     let mut blocks: Vec<Vec<u8>> = Vec::new();
     for file in file_paths.clone() {
         let data = fs::read(file).unwrap();
         blocks.push(data);
     }
-    let root = xor_tree::Node::make_root(&blocks);
+    let key = xor_tree::get_root_xor(&blocks);
     for i in 0..blocks.len() {
-        blocks[i] = xor(&blocks[i], &root.xor);
+        blocks[i] = xor(&blocks[i], &key);
     }
 
     fs::write(
         file_paths[0].split('-').collect::<Vec<&str>>()[0].to_owned() + "-decrypted.horcrux",
         blocks.concat(),
     )?;
+
     Ok(())
 }
 
@@ -107,5 +116,6 @@ pub fn xor(left_string: &Vec<u8>, right_string: &Vec<u8>) -> Vec<u8> {
     for i in 0..right.len() {
         xor.push(left[i] ^ right[i]);
     }
+
     xor
 }

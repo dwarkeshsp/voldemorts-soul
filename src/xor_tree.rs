@@ -1,6 +1,5 @@
 use crate::xor;
 
-#[derive(Debug, Clone)]
 pub struct Tree {
     pub nodes: Vec<Node>,
 }
@@ -10,42 +9,37 @@ pub struct Node {
     pub xor: Vec<u8>,
 }
 
-impl Node {
-    pub fn make_root(blocks: &Vec<Vec<u8>>) -> Self {
-        let mut tree = Tree { nodes: Vec::new() };
-        for block in blocks {
-            tree.nodes.push(Node {
-                xor: block.to_vec(),
-            });
-        }
-        let mut cursor = 0;
-        let mut len = tree.nodes.len();
-        while cursor < len - 1 {
-            for index in cursor..len {
-                if index % 2 == 0 {
-                    if index + 1 < len {
-                        //matched; has sibling
-                        tree.nodes
-                            .push(Node::make_from_children(&tree.nodes, index, index + 1));
-                    } else {
-                        tree.nodes.push(Node::make_from_child(&tree.nodes, index));
-                    }
+pub fn get_root_xor(blocks: &Vec<Vec<u8>>) -> Vec<u8> {
+    let mut tree = Tree { nodes: Vec::new() };
+    let nodes = &mut tree.nodes;
+
+    for block in blocks {
+        nodes.push(Node {
+            xor: block.to_vec(),
+        });
+    }
+
+    let mut cursor = 0;
+    let mut len = nodes.len();
+
+    while cursor < len - 1 {
+        for index in cursor..len {
+            if index % 2 == 0 {
+                if index + 1 < len {
+                    //matched; parent is xor of siblings
+                    let xor = xor(&nodes[index].xor, &nodes[index + 1].xor);
+                    nodes.push(Node { xor: xor });
+                } else {
+                    // unmatched (remainder or its parent); make parent clone of child
+                    // should not be necessary with 8 (power of 2) horcruxes
+                    let xor = nodes[index].xor.clone();
+                    nodes.push(Node { xor: xor });
                 }
             }
-            cursor = len;
-            len = tree.nodes.len();
         }
-        tree.nodes[tree.nodes.len() - 1].clone()
+        cursor = len;
+        len = nodes.len();
     }
 
-    fn make_from_children(nodes: &Vec<Node>, left: usize, right: usize) -> Self {
-        let xor = xor(&nodes[left].xor, &nodes[right].xor);
-        Node { xor: xor }
-    }
-
-    fn make_from_child(nodes: &Vec<Node>, left: usize) -> Self {
-        Node {
-            xor: nodes[left].xor.clone(),
-        }
-    }
+    nodes[nodes.len() - 1].xor.clone()
 }
