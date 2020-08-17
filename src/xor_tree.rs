@@ -14,9 +14,10 @@ impl Node {
     pub fn make_root(blocks: &Vec<Vec<u8>>) -> Self {
         let mut tree = Tree { nodes: Vec::new() };
         for block in blocks {
-            tree.nodes.push(Node::make_block(block));
+            tree.nodes.push(Node {
+                xor: block.to_vec(),
+            });
         }
-
         let mut cursor = 0;
         let mut len = tree.nodes.len();
         while cursor < len - 1 {
@@ -34,14 +35,7 @@ impl Node {
             cursor = len;
             len = tree.nodes.len();
         }
-
         tree.nodes[tree.nodes.len() - 1].clone()
-    }
-
-    fn make_block(block: &[u8]) -> Self {
-        Node {
-            xor: Vec::from(block),
-        }
     }
 
     fn make_from_children(nodes: &Vec<Node>, left: usize, right: usize) -> Self {
