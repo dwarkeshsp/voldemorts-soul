@@ -1,6 +1,6 @@
 # Voldemort's Soul
 
-Splits a message up and encrypts the parts such they can only be decrypted and reassembled if you have all the encrypted parts.
+Splits a message up and encrypts the parts such the message can only be decrypted and reassembled if you have all the encrypted parts.
 
 Maybe you're part of a secret society. You don't trust any member individually to keep a secret message safe, so you use this program to encrypt and split up the message and then give every member one of these encrypted chunks. You can only decrypt the message if every single member gives you a copy of their chunk.
 
