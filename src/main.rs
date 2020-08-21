@@ -8,6 +8,7 @@ fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
     let path = &args[1].clone();
     let metadata = get_metadata(path);
+
     if metadata.is_file() {
         encrypt(path)?;
     } else if metadata.is_dir() {
@@ -30,6 +31,7 @@ fn encrypt(path: &String) -> io::Result<()> {
     println!("Encrypting {}...\n", path);
     let data = fs::read(path)?;
     let blocks = split(&data);
+
     let key = xor_tree::get_root_xor(&blocks);
     for (i, block) in blocks.iter().enumerate() {
         let encrypted_block = xor(&block.to_vec(), &key);
@@ -47,14 +49,16 @@ fn split<'a>(data: &'a Vec<u8>) -> Vec<Vec<u8>> {
         blocks.push(data[i..i + block_size].to_vec());
         i += block_size;
     }
+
     let mut remainder: Vec<u8> = Vec::with_capacity(block_size);
     while i < data.len() {
         remainder.push(data[i]);
         i += 1;
     }
+
     while remainder.len() % block_size != 0 {
         // fill with whitespace
-        remainder.push(32);
+        remainder.push(0x00);
     }
     blocks.push(remainder.to_vec());
     blocks
@@ -68,18 +72,22 @@ fn get_block_size(len: usize) -> usize {
     }
     block_size
 }
+
 fn decrypt(path: &String) -> io::Result<()> {
     println!("Decrypting {}...\n", path);
     let file_paths = get_file_paths(path);
+
     let mut blocks: Vec<Vec<u8>> = Vec::new();
     for file in file_paths.clone() {
         let data = fs::read(file).unwrap();
         blocks.push(data);
     }
+
     let key = xor_tree::get_root_xor(&blocks);
     for i in 0..blocks.len() {
         blocks[i] = xor(&blocks[i], &key);
     }
+
     let file_name =
         file_paths[0].split('-').collect::<Vec<&str>>()[0].to_owned() + "-decrypted.horcrux";
     fs::write(file_name, blocks.concat())?;

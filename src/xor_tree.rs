@@ -17,10 +17,13 @@ pub fn get_root_xor(blocks: &Vec<Vec<u8>>) -> Vec<u8> {
             xor: block.to_vec(),
         });
     }
+
     let mut cursor = 0;
     let mut len = nodes.len();
+    // keep going until cursor reaches root (last) node
     while cursor < len - 1 {
         for index in cursor..len {
+            // xoring the even nodes with the node after
             if index % 2 == 0 {
                 if index + 1 < len {
                     //matched; parent is xor of siblings
@@ -37,5 +40,6 @@ pub fn get_root_xor(blocks: &Vec<Vec<u8>>) -> Vec<u8> {
         cursor = len;
         len = nodes.len();
     }
+
     nodes[nodes.len() - 1].xor.clone()
 }
